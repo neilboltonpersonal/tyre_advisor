@@ -1,4 +1,4 @@
-import axios from 'axios';
+import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
 import { ScrapedTyreData } from '../../types/tyre';
 
@@ -7,8 +7,9 @@ const SINGLETRACKS_URL = 'https://www.singletracks.com/mtb-gear/category/tires/'
 export async function scrapeSingletracks(): Promise<ScrapedTyreData[]> {
   console.log(`Scraping singletracks.com from ${SINGLETRACKS_URL}...`);
   try {
-    const { data } = await axios.get(SINGLETRACKS_URL);
-    const $ = cheerio.load(data);
+    const response = await fetch(SINGLETRACKS_URL);
+    const body = await response.text();
+    const $ = cheerio.load(body);
     const tyres: ScrapedTyreData[] = [];
 
     $('article.post-type-st_gear').each((_i, el) => {
