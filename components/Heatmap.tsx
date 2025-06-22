@@ -567,41 +567,43 @@ export default function Heatmap({ recommendations, userLocation }: HeatmapProps)
             ) : (
               filteredComments.map((comment, index) => (
                 <Paper key={index} p="md" radius="md" withBorder>
-                  <Group justify="space-between" align="flex-start" mb="sm">
-                    <Group gap="sm">
+                  <Group justify="space-between" align="flex-start">
+                    <Group gap="sm" align="flex-start">
                       <Avatar src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${comment.username}`} alt={comment.username} radius="xl" />
-                      <div style={{ flex: 1 }}>
-                        <Group justify="space-between" align="center">
-                          <Text size="sm" fw={500}>{comment.username}</Text>
-                          <Group gap="xs">
-                            {[...Array(5)].map((_, i) => (
-                              <IconStar key={i} size={16} color={i < comment.rating ? '#fab005' : '#ced4da'} fill={i < comment.rating ? '#fab005' : 'transparent'} />
-                            ))}
-                          </Group>
+                      <div>
+                        <Text size="sm" fw={500}>{comment.username}</Text>
+                        <Group gap="xs" align="center">
+                          <Text size="xs" c="dimmed">{comment.tyreModel}</Text>
+                          <Badge 
+                            variant="light"
+                            size="xs"
+                            color={comment.source === 'Pinkbike' ? 'pink' : 'cyan'}
+                          >
+                            {comment.source}
+                          </Badge>
                         </Group>
-                        <Text size="xs" c="dimmed">{comment.tyreModel} ({comment.tyreBrand})</Text>
                       </div>
+                    </Group>
+                    <Group gap="xs">
+                      {[...Array(5)].map((_, i) => (
+                        <IconStar key={i} size={16} color={i < comment.rating ? '#fab005' : '#ced4da'} fill={i < comment.rating ? '#fab005' : 'transparent'} />
+                      ))}
                     </Group>
                   </Group>
 
-                  <Text pl={54} pr={10} pt={4} size="sm">
+                  <Text size="sm" my="sm">
                     {comment.comment}
                   </Text>
                   
-                  <Group justify="space-between" align="center" mt="sm" pl={54} pr={10}>
-                    <Group gap="xs" c="dimmed">
+                  <Group justify="space-between" align="center" c="dimmed">
+                    <Group gap="xs">
                       <IconWorld size={14} />
                       <Text size="xs">{comment.location}</Text>
-                      <IconCalendar size={14} style={{ marginLeft: 8 }} />
+                    </Group>
+                    <Group gap="xs">
+                      <IconCalendar size={14} />
                       <Text size="xs">{timeAgo(comment.date)}</Text>
                     </Group>
-                    <Badge 
-                      variant="light"
-                      size="xs"
-                      color={comment.source === 'Pinkbike' ? 'pink' : 'cyan'}
-                    >
-                      {comment.source}
-                    </Badge>
                   </Group>
                 </Paper>
               ))
