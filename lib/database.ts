@@ -8,12 +8,18 @@ import {
   ScrapedTyreData,
   CommunityDiscussion 
 } from '../types/tyre';
+import { simpleDB } from './simple-database';
 
-const DB_FILE_PATH = path.join(process.cwd(), 'data', 'tyre-database.json');
+const LOCAL_DB_PATH = path.join(process.cwd(), 'data', 'tyre-database.json');
 
-// Ensure data directory exists
+// Check if we're in a serverless environment (Vercel)
+const isServerless = process.env.VERCEL === '1';
+
+// Ensure data directory exists (for local development)
 async function ensureDataDirectory() {
-  const dataDir = path.dirname(DB_FILE_PATH);
+  if (isServerless) return; // Skip in serverless environment
+  
+  const dataDir = path.dirname(LOCAL_DB_PATH);
   try {
     await fs.access(dataDir);
   } catch {
@@ -23,54 +29,77 @@ async function ensureDataDirectory() {
 
 // Initialize empty database
 async function initializeDatabase(): Promise<TyreDatabase> {
-  await ensureDataDirectory();
-  
-  const db: TyreDatabase = {
-    tyres: [],
-    discussions: [],
-    usageStats: [],
-    lastSync: new Date()
-  };
-  
-  await saveDatabase(db);
-  return db;
+  if (isServerless) {
+    const db = await simpleDB.initializeDatabase();
+    await simpleDB.seedDatabase(); // Seed with sample data
+    return db;
+  } else {
+    const db: TyreDatabase = {
+      tyres: [],
+      discussions: [],
+      usageStats: [],
+      lastSync: new Date()
+    };
+    
+    await ensureDataDirectory();
+    await saveDatabase(db);
+    return db;
+  }
 }
 
-// Load database from file
+// Load database from cloud or local file
 export async function loadDatabase(): Promise<TyreDatabase> {
   try {
-    await ensureDataDirectory();
-    const data = await fs.readFile(DB_FILE_PATH, 'utf-8');
-    const db: TyreDatabase = JSON.parse(data);
-    
-    // Convert date strings back to Date objects
-    db.lastSync = new Date(db.lastSync);
-    db.tyres.forEach(tyre => {
-      tyre.createdAt = new Date(tyre.createdAt);
-      tyre.updatedAt = new Date(tyre.updatedAt);
-      if (tyre.lastDiscussed) {
-        tyre.lastDiscussed = new Date(tyre.lastDiscussed);
+    if (isServerless) {
+      // In serverless environment, use simple database
+      const db = await simpleDB.loadDatabase();
+      if (db.tyres.length === 0) {
+        // If database is empty, seed it with sample data
+        await simpleDB.seedDatabase();
+        return await simpleDB.loadDatabase();
       }
-    });
-    db.discussions.forEach(discussion => {
-      discussion.date = new Date(discussion.date);
-      discussion.createdAt = new Date(discussion.createdAt);
-    });
-    db.usageStats.forEach(usage => {
-      usage.lastUpdated = new Date(usage.lastUpdated);
-    });
-    
-    return db;
+      return db;
+    } else {
+      // In local development, use local file
+      await ensureDataDirectory();
+      const data = await fs.readFile(LOCAL_DB_PATH, 'utf-8');
+      const db: TyreDatabase = JSON.parse(data);
+      
+      // Convert date strings back to Date objects
+      db.lastSync = new Date(db.lastSync);
+      db.tyres.forEach(tyre => {
+        tyre.createdAt = new Date(tyre.createdAt);
+        tyre.updatedAt = new Date(tyre.updatedAt);
+        if (tyre.lastDiscussed) {
+          tyre.lastDiscussed = new Date(tyre.lastDiscussed);
+        }
+      });
+      db.discussions.forEach(discussion => {
+        discussion.date = new Date(discussion.date);
+        discussion.createdAt = new Date(discussion.createdAt);
+      });
+      db.usageStats.forEach(usage => {
+        usage.lastUpdated = new Date(usage.lastUpdated);
+      });
+      
+      return db;
+    }
   } catch (error) {
     console.log('Database not found, initializing new database...');
     return initializeDatabase();
   }
 }
 
-// Save database to file
+// Save database to cloud or local file
 async function saveDatabase(db: TyreDatabase): Promise<void> {
-  await ensureDataDirectory();
-  await fs.writeFile(DB_FILE_PATH, JSON.stringify(db, null, 2));
+  if (isServerless) {
+    // In serverless environment, save to simple database
+    await simpleDB.saveDatabase(db);
+  } else {
+    // In local development, save to local file
+    await ensureDataDirectory();
+    await fs.writeFile(LOCAL_DB_PATH, JSON.stringify(db, null, 2));
+  }
 }
 
 // Generate unique ID
