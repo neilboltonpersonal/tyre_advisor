@@ -20,9 +20,87 @@ import {
   ActionIcon,
   Tooltip,
 } from '@mantine/core';
-import { IconMapPin, IconLocation, IconAlertCircle, IconStar, IconMessage, IconFilter, IconFilterOff } from '@tabler/icons-react';
+import { IconMapPin, IconLocation, IconAlertCircle, IconStar, IconMessage, IconFilter, IconFilterOff, IconCalendar, IconWorld } from '@tabler/icons-react';
 import dynamic from 'next/dynamic';
 import { UserComment } from '../types/tyre';
+
+// Helper function to generate a random date within the last year
+const getRandomDate = (): string => {
+  const end = new Date();
+  const start = new Date();
+  start.setFullYear(start.getFullYear() - 1);
+  return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime())).toISOString().split('T')[0];
+};
+
+// Moved mock data outside the component to prevent re-generation on every render
+const allMockComments: Omit<UserComment, 'location'>[] = [
+  {
+    id: '1',
+    username: 'TrailRider_Mike',
+    tyreModel: 'Maxxis Minion DHF',
+    tyreBrand: 'Maxxis',
+    comment: "Absolutely love these tyres! Perfect grip on loose terrain and they handle wet conditions surprisingly well. Been running them for 6 months now and they're still going strong.",
+    rating: 5,
+    date: getRandomDate(),
+    ridingStyle: 'Enduro',
+    terrain: 'Rocky trails'
+  },
+  {
+    id: '2',
+    username: 'XC_Sarah',
+    tyreModel: 'Continental Trail King',
+    tyreBrand: 'Continental',
+    comment: "Great all-rounder for my XC rides. Fast rolling but still provides decent grip when things get technical. Perfect for the mixed terrain around here.",
+    rating: 4,
+    date: getRandomDate(),
+    ridingStyle: 'Cross Country',
+    terrain: 'Mixed terrain'
+  },
+  {
+    id: '3',
+    username: 'Downhill_Dave',
+    tyreModel: 'Schwalbe Magic Mary',
+    tyreBrand: 'Schwalbe',
+    comment: "These tyres are beasts! Incredible braking performance and they stick to everything. A bit heavy but worth it for the confidence they give you on steep descents.",
+    rating: 5,
+    date: getRandomDate(),
+    ridingStyle: 'Downhill',
+    terrain: 'Steep descents'
+  },
+  {
+    id: '4',
+    username: 'WeekendWarrior',
+    tyreModel: 'Michelin Wild Enduro',
+    tyreBrand: 'Michelin',
+    comment: "Solid performance for weekend rides. Good balance between grip and rolling resistance. They've held up well to the abuse I put them through.",
+    rating: 4,
+    date: getRandomDate(),
+    ridingStyle: 'Trail',
+    terrain: 'Technical trails'
+  },
+  {
+    id: '5',
+    username: 'GravelGuru',
+    tyreModel: 'WTB Riddler',
+    tyreBrand: 'WTB',
+    comment: "Perfect for gravel adventures! Fast on smooth sections and surprisingly capable on rougher terrain. Great puncture protection too.",
+    rating: 5,
+    date: getRandomDate(),
+    ridingStyle: 'Gravel',
+    terrain: 'Gravel roads'
+  },
+  {
+    id: '6',
+    username: 'AllMountain_Alex',
+    tyreModel: 'Maxxis Assegai',
+    tyreBrand: 'Maxxis',
+    comment: "These tyres are confidence-inspiring! Amazing grip in all conditions and they roll better than I expected. Perfect for all-mountain riding.",
+    rating: 5,
+    date: getRandomDate(),
+    ridingStyle: 'All Mountain',
+    terrain: 'Varied terrain'
+  }
+];
 
 // Dynamically import the map component to avoid SSR issues with Leaflet
 const MapComponent = dynamic(() => import('./MapComponent'), {
@@ -244,84 +322,38 @@ export default function Heatmap({ recommendations, userLocation }: HeatmapProps)
   const generateUserComments = () => {
     if (!location) return;
 
-    const mockComments: UserComment[] = [
-      {
-        id: '1',
-        username: 'TrailRider_Mike',
-        tyreModel: 'Maxxis Minion DHF',
-        tyreBrand: 'Maxxis',
-        comment: "Absolutely love these tyres! Perfect grip on loose terrain and they handle wet conditions surprisingly well. Been running them for 6 months now and they're still going strong.",
-        rating: 5,
-        location: `${location.city}, ${location.country}`,
-        date: '2024-01-15',
-        ridingStyle: 'Enduro',
-        terrain: 'Rocky trails'
-      },
-      {
-        id: '2',
-        username: 'XC_Sarah',
-        tyreModel: 'Continental Trail King',
-        tyreBrand: 'Continental',
-        comment: "Great all-rounder for my XC rides. Fast rolling but still provides decent grip when things get technical. Perfect for the mixed terrain around here.",
-        rating: 4,
-        location: `${location.city}, ${location.country}`,
-        date: '2024-01-10',
-        ridingStyle: 'Cross Country',
-        terrain: 'Mixed terrain'
-      },
-      {
-        id: '3',
-        username: 'Downhill_Dave',
-        tyreModel: 'Schwalbe Magic Mary',
-        tyreBrand: 'Schwalbe',
-        comment: "These tyres are beasts! Incredible braking performance and they stick to everything. A bit heavy but worth it for the confidence they give you on steep descents.",
-        rating: 5,
-        location: `${location.city}, ${location.country}`,
-        date: '2024-01-08',
-        ridingStyle: 'Downhill',
-        terrain: 'Steep descents'
-      },
-      {
-        id: '4',
-        username: 'WeekendWarrior',
-        tyreModel: 'Michelin Wild Enduro',
-        tyreBrand: 'Michelin',
-        comment: "Solid performance for weekend rides. Good balance between grip and rolling resistance. They've held up well to the abuse I put them through.",
-        rating: 4,
-        location: `${location.city}, ${location.country}`,
-        date: '2024-01-05',
-        ridingStyle: 'Trail',
-        terrain: 'Technical trails'
-      },
-      {
-        id: '5',
-        username: 'GravelGuru',
-        tyreModel: 'WTB Riddler',
-        tyreBrand: 'WTB',
-        comment: "Perfect for gravel adventures! Fast on smooth sections and surprisingly capable on rougher terrain. Great puncture protection too.",
-        rating: 5,
-        location: `${location.city}, ${location.country}`,
-        date: '2024-01-03',
-        ridingStyle: 'Gravel',
-        terrain: 'Gravel roads'
-      },
-      {
-        id: '6',
-        username: 'AllMountain_Alex',
-        tyreModel: 'Maxxis Assegai',
-        tyreBrand: 'Maxxis',
-        comment: "These tyres are confidence-inspiring! Amazing grip in all conditions and they roll better than I expected. Perfect for all-mountain riding.",
-        rating: 5,
-        location: `${location.city}, ${location.country}`,
-        date: '2024-01-01',
-        ridingStyle: 'All Mountain',
-        terrain: 'Varied terrain'
-      }
-    ];
+    // Add location to the mock comments
+    const commentsWithLocation = allMockComments.map(comment => ({
+      ...comment,
+      location: `${location.city}, ${location.country.substring(0, 15)}...`, // Truncate long country names
+    }));
 
     // Randomly select 3-4 comments to show
-    const shuffled = mockComments.sort(() => 0.5 - Math.random());
+    const shuffled = commentsWithLocation.sort(() => 0.5 - Math.random());
     setUserComments(shuffled.slice(0, Math.floor(Math.random() * 2) + 3));
+  };
+
+  const timeAgo = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    let interval = seconds / 31536000;
+    if (interval > 1) return `${Math.floor(interval)} years ago`;
+    
+    interval = seconds / 2592000;
+    if (interval > 1) return `${Math.floor(interval)} months ago`;
+    
+    interval = seconds / 86400;
+    if (interval > 1) return `${Math.floor(interval)} days ago`;
+
+    interval = seconds / 3600;
+    if (interval > 1) return `${Math.floor(interval)} hours ago`;
+
+    interval = seconds / 60;
+    if (interval > 1) return `${Math.floor(interval)} minutes ago`;
+
+    return `${Math.floor(seconds)} seconds ago`;
   };
 
   const getUsageIntensity = (count: number): 'low' | 'medium' | 'high' => {
@@ -531,49 +563,34 @@ export default function Heatmap({ recommendations, userLocation }: HeatmapProps)
                 <Paper key={index} p="md" radius="md" withBorder>
                   <Group justify="space-between" align="flex-start" mb="sm">
                     <Group gap="sm">
-                      <Avatar 
-                        src={`https://ui-avatars.com/api/?name=${comment.username}&background=228be6&color=fff`} 
-                        radius="xl" 
-                        size="md" 
-                      />
-                      <div>
-                        <Text size="sm" fw={600}>{comment.username}</Text>
-                        <Text size="xs" c="dimmed">{comment.date}</Text>
+                      <Avatar src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${comment.username}`} alt={comment.username} radius="xl" />
+                      <div style={{ flex: 1 }}>
+                        <Group justify="space-between" align="center">
+                          <Text size="sm" fw={500}>{comment.username}</Text>
+                          <Group gap="xs">
+                            {[...Array(5)].map((_, i) => (
+                              <IconStar key={i} size={16} color={i < comment.rating ? '#fab005' : '#ced4da'} fill={i < comment.rating ? '#fab005' : 'transparent'} />
+                            ))}
+                          </Group>
+                        </Group>
+                        <Text size="xs" c="dimmed">{comment.tyreModel} ({comment.tyreBrand})</Text>
                       </div>
                     </Group>
-                    <Group gap="xs">
-                      <Badge color="blue" variant="light" size="sm">
-                        {comment.tyreModel}
-                      </Badge>
-                      <Badge color="grape" variant="light" size="sm">
-                        {comment.ridingStyle}
-                      </Badge>
-                    </Group>
-                  </Group>
-                  
-                  <Group gap="xs" mb="sm">
-                    {[...Array(5)].map((_, i) => (
-                      <IconStar
-                        key={i}
-                        size={16}
-                        fill={i < comment.rating ? '#fbbf24' : 'none'}
-                        color={i < comment.rating ? '#fbbf24' : '#d1d5db'}
-                      />
-                    ))}
-                    <Text size="xs" c="dimmed">({comment.rating}/5)</Text>
                   </Group>
 
-                  <Text size="sm" mb="sm" style={{ lineHeight: 1.5 }}>
-                    "{comment.comment}"
+                  <Text pl={54} pr={10} pt={4} size="sm">
+                    {comment.comment}
                   </Text>
-
-                  <Group gap="xs" justify="space-between">
-                    <Badge color="gray" variant="light" size="xs">
-                      {comment.terrain}
-                    </Badge>
-                    <Text size="xs" c="dimmed">
-                      {comment.location}
-                    </Text>
+                  
+                  <Group justify="space-between" align="center" mt="sm" pl={54} pr={10}>
+                    <Group gap="xs" c="dimmed">
+                      <IconWorld size={14} />
+                      <Text size="xs">{comment.location}</Text>
+                    </Group>
+                    <Group gap="xs" c="dimmed">
+                      <IconCalendar size={14} />
+                      <Text size="xs">{timeAgo(comment.date)}</Text>
+                    </Group>
                   </Group>
                 </Paper>
               ))
