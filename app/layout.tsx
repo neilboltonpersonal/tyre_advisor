@@ -16,9 +16,10 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <ColorSchemeScript />
+        <link rel="shortcut icon" href="/favicon.svg" />
       </head>
       <body>
-        <MantineProvider theme={theme}>
+        <MantineProvider theme={theme} defaultColorScheme="dark">
           {children}
         </MantineProvider>
       </body>

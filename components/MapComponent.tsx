@@ -37,48 +37,43 @@ interface MapComponentProps {
 //   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 // });
 
-// Component to fit bounds
-function FitBounds({ tyreData }: { tyreData: TyreUsageData[] }) {
+// This component now handles both resizing and fitting bounds when the map becomes visible.
+function MapUpdater({ userLocation, tyreData }: { userLocation: LocationData, tyreData: TyreUsageData[] }) {
   const map = useMap();
 
   useEffect(() => {
-    if (tyreData.length > 1) { // Only fit bounds if there's more than one point
-      const bounds = L.latLngBounds(
-        tyreData.map(data => [data.latitude, data.longitude])
-      );
-      map.fitBounds(bounds.pad(0.2)); // Use slightly more padding
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          // A small delay to ensure the container has finished resizing
+          setTimeout(() => {
+            map.invalidateSize();
+
+            const points = tyreData.map(d => L.latLng(d.latitude, d.longitude));
+            points.push(L.latLng(userLocation.latitude, userLocation.longitude));
+
+            if (points.length > 0) {
+              map.fitBounds(L.latLngBounds(points).pad(0.2));
+            }
+          }, 200);
+        }
+      },
+      { threshold: 0.5 } // Trigger when 50% of the map is visible
+    );
+
+    const container = map.getContainer();
+    if (container) {
+      observer.observe(container);
     }
-  }, [tyreData, map]);
+
+    return () => {
+      if (container) {
+        observer.unobserve(container);
+      }
+    };
+  }, [map, userLocation, tyreData]);
 
   return null;
-}
-
-// Component to invalidate map size on visibility change
-function InvalidateSizeOnVisible() {
-    const map = useMap();
-
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    setTimeout(() => map.invalidateSize(), 200); // Delay to allow container to resize
-                }
-            },
-            { threshold: 1 }
-        );
-
-        if (map.getContainer()) {
-            observer.observe(map.getContainer());
-        }
-
-        return () => {
-            if (map.getContainer()) {
-                observer.unobserve(map.getContainer());
-            }
-        };
-    }, [map]);
-
-    return null;
 }
 
 export default function MapComponent({ userLocation, tyreData, getIntensityColor }: MapComponentProps) {
@@ -142,8 +137,7 @@ export default function MapComponent({ userLocation, tyreData, getIntensityColor
         );
       })}
 
-      <FitBounds tyreData={tyreData} />
-      <InvalidateSizeOnVisible />
+      <MapUpdater userLocation={userLocation} tyreData={tyreData} />
     </MapContainer>
   );
 } 
