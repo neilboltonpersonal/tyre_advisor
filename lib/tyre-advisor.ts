@@ -1,159 +1,33 @@
-import { TyreRecommendation, UserPreferences } from '../types/tyre';
+import { TyreRecommendation, UserPreferences, ScrapedTyreData } from '../types/tyre';
 import { analyzeWithAI } from './ai-analyzer';
+import { scrapeMtbr } from './scrapers/mtbr';
+import { scrapeVitalMtb } from './scrapers/vitalmtb';
+import { scrapeBikeRadar } from './scrapers/bikeradar';
+import { scrapeSingletracks } from './scrapers/singletracks';
 
-// Mock data for tyre recommendations
-const mockTyreData = [
-  {
-    model: 'Maxxis Minion DHF',
-    brand: 'Maxxis',
-    type: 'Downhill/Trail',
-    description: 'Excellent grip and durability for aggressive riding. Great for technical terrain and wet conditions.',
-    price: '$60-80',
-    rating: 4.8,
-    source: 'Pinkbike Reviews',
-    url: 'https://www.pinkbike.com'
-  },
-  {
-    model: 'Continental Trail King',
-    brand: 'Continental',
-    type: 'Trail/All Mountain',
-    description: 'Balanced performance for mixed terrain. Good rolling speed with decent grip.',
-    price: '$50-70',
-    rating: 4.5,
-    source: 'Singletrackworld Reviews',
-    url: 'https://www.singletrackworld.com'
-  },
-  {
-    model: 'Schwalbe Nobby Nic',
-    brand: 'Schwalbe',
-    type: 'Cross Country/Trail',
-    description: 'Fast rolling with good grip for XC and light trail use. Lightweight and efficient.',
-    price: '$45-65',
-    rating: 4.3,
-    source: 'Pinkbike Reviews',
-    url: 'https://www.pinkbike.com'
-  },
-  {
-    model: 'Michelin Wild Enduro',
-    brand: 'Michelin',
-    type: 'Enduro/Downhill',
-    description: 'Aggressive enduro tyre with excellent grip in all conditions. Heavy but very durable.',
-    price: '$70-90',
-    rating: 4.7,
-    source: 'Singletrackworld Reviews',
-    url: 'https://www.singletrackworld.com'
-  },
-  {
-    model: 'WTB Trail Boss',
-    brand: 'WTB',
-    type: 'Trail',
-    description: 'Versatile trail tyre with good all-around performance. Affordable and reliable.',
-    price: '$40-60',
-    rating: 4.2,
-    source: 'Pinkbike Reviews',
-    url: 'https://www.pinkbike.com'
-  },
-  {
-    model: 'Specialized Butcher',
-    brand: 'Specialized',
-    type: 'Trail/Enduro',
-    description: 'Aggressive trail tyre with excellent grip. Good for technical riding.',
-    price: '$55-75',
-    rating: 4.4,
-    source: 'Singletrackworld Reviews',
-    url: 'https://www.singletrackworld.com'
-  },
-  {
-    model: 'Bontrager XR4',
-    brand: 'Bontrager',
-    type: 'Cross Country/Trail',
-    description: 'Fast rolling XC tyre with good grip for light trail use. Lightweight and efficient.',
-    price: '$45-65',
-    rating: 4.1,
-    source: 'Pinkbike Reviews',
-    url: 'https://www.pinkbike.com'
-  },
-  {
-    model: 'Hutchinson Toro',
-    brand: 'Hutchinson',
-    type: 'Trail/All Mountain',
-    description: 'Versatile all-mountain tyre with good grip and rolling speed. Tubeless ready.',
-    price: '$50-70',
-    rating: 4.3,
-    source: 'Singletrackworld Reviews',
-    url: 'https://www.singletrackworld.com'
-  },
-  {
-    model: 'Vittoria Mazza',
-    brand: 'Vittoria',
-    type: 'Enduro/Trail',
-    description: 'Aggressive enduro tyre with excellent grip and durability. Great for technical terrain.',
-    price: '$65-85',
-    rating: 4.6,
-    source: 'Pinkbike Reviews',
-    url: 'https://www.pinkbike.com'
-  },
-  {
-    model: 'Pirelli Scorpion XC',
-    brand: 'Pirelli',
-    type: 'Cross Country',
-    description: 'Fast rolling XC tyre with good grip for racing and light trail use.',
-    price: '$50-70',
-    rating: 4.2,
-    source: 'Singletrackworld Reviews',
-    url: 'https://www.singletrackworld.com'
-  },
-  {
-    model: 'Maxxis High Roller II',
-    brand: 'Maxxis',
-    type: 'Trail/Enduro',
-    description: 'Versatile trail tyre with excellent grip and good rolling speed.',
-    price: '$55-75',
-    rating: 4.5,
-    source: 'Pinkbike Reviews',
-    url: 'https://www.pinkbike.com'
-  },
-  {
-    model: 'Schwalbe Magic Mary',
-    brand: 'Schwalbe',
-    type: 'Downhill/Enduro',
-    description: 'Aggressive downhill tyre with exceptional grip in all conditions.',
-    price: '$70-90',
-    rating: 4.7,
-    source: 'Singletrackworld Reviews',
-    url: 'https://www.singletrackworld.com'
-  },
-  {
-    model: 'Maxxis Ardent',
-    brand: 'Maxxis',
-    type: 'Cross Country/Trail',
-    description: 'Fast rolling XC tyre with good grip for light trail use. Popular for racing.',
-    price: '$45-65',
-    rating: 4.4,
-    source: 'Pinkbike Reviews',
-    url: 'https://www.pinkbike.com'
-  },
-  {
-    model: 'Continental Mountain King',
-    brand: 'Continental',
-    type: 'Trail/All Mountain',
-    description: 'Versatile trail tyre with excellent grip and good rolling speed.',
-    price: '$55-75',
-    rating: 4.3,
-    source: 'Singletrackworld Reviews',
-    url: 'https://www.singletrackworld.com'
-  },
-  {
-    model: 'Schwalbe Racing Ralph',
-    brand: 'Schwalbe',
-    type: 'Cross Country',
-    description: 'Ultra-fast rolling XC tyre for racing and light trail use.',
-    price: '$50-70',
-    rating: 4.1,
-    source: 'Pinkbike Reviews',
-    url: 'https://www.pinkbike.com'
+// This function will replace the old mock data by fetching from all sources.
+async function scrapeAllSources(): Promise<ScrapedTyreData[]> {
+  console.log('Starting all scrapers...');
+  try {
+    const results = await Promise.allSettled([
+      scrapeMtbr(),
+      scrapeVitalMtb(),
+      scrapeBikeRadar(),
+      scrapeSingletracks(),
+      // Add existing scrapers here if they are in separate files
+    ]);
+
+    const successfulData = results
+      .filter(result => result.status === 'fulfilled')
+      .flatMap(result => (result as PromiseFulfilledResult<ScrapedTyreData[]>).value);
+    
+    console.log(`Scraping complete. Found ${successfulData.length} total tyres.`);
+    return successfulData;
+  } catch (error) {
+    console.error('An error occurred during scraping:', error);
+    return [];
   }
-];
+}
 
 export async function getTyreRecommendations(
   userPreferences: UserPreferences,
@@ -161,19 +35,13 @@ export async function getTyreRecommendations(
   currentRecommendations?: TyreRecommendation[]
 ): Promise<TyreRecommendation[]> {
   try {
-    // Convert mock data to the expected format
-    const scrapedData = mockTyreData.map(tyre => ({
-      model: tyre.model,
-      brand: tyre.brand,
-      type: tyre.type,
-      description: tyre.description,
-      price: tyre.price,
-      rating: tyre.rating,
-      source: tyre.source,
-      url: tyre.url,
-      scrapedAt: new Date()
-    }));
+    const scrapedData = await scrapeAllSources();
 
+    if (scrapedData.length === 0) {
+      console.warn('No data was scraped. Falling back to sample recommendations.');
+      return getFallbackRecommendations(userPreferences);
+    }
+    
     // If we have current recommendations and a refinement question, use AI to refine
     if (currentRecommendations && refinementQuestion) {
       return await analyzeWithAI(
@@ -340,8 +208,8 @@ export async function getTyreDataStats(): Promise<{
   sources: string[];
 }> {
   return {
-    totalTyres: mockTyreData.length,
-    lastUpdated: new Date(),
-    sources: Array.from(new Set(mockTyreData.map(item => item.source)))
+    totalTyres: 0, // This will be updated when scrapeAllSources is implemented
+    lastUpdated: null,
+    sources: []
   };
 } 

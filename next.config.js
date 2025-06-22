@@ -3,7 +3,14 @@ const nextConfig = {
   experimental: {
   },
   images: {
-    domains: ['www.pinkbike.com', 'www.singletrackworld.com'],
+    domains: [
+      'www.pinkbike.com',
+      'www.singletrackworld.com',
+      'www.mtbr.com',
+      'www.vitalmtb.com',
+      'www.bikeradar.com',
+      'www.singletracks.com',
+    ],
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
