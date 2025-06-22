@@ -1,5 +1,3 @@
-"use server";
-
 import { TyreRecommendation, UserPreferences, ScrapedTyreData } from '../types/tyre';
 import { analyzeWithAI } from './ai-analyzer';
 import { scrapeMtbr } from './scrapers/mtbr';

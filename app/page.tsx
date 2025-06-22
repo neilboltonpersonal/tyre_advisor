@@ -26,7 +26,7 @@ import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import { IconBike, IconWheel, IconSearch, IconMessageCircle, IconRefresh, IconMapPin } from '@tabler/icons-react';
 import { TyreRecommendation } from '../types/tyre';
-import { getTyreRecommendations } from '../lib/tyre-advisor';
+import { getTyreRecommendations } from '../lib/actions';
 import Heatmap from '../components/Heatmap';
 
 export default function HomePage() {
