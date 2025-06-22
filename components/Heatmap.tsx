@@ -22,7 +22,7 @@ import {
 } from '@mantine/core';
 import { IconMapPin, IconLocation, IconAlertCircle, IconStar, IconMessage, IconFilter, IconFilterOff, IconCalendar, IconWorld } from '@tabler/icons-react';
 import dynamic from 'next/dynamic';
-import { UserComment } from '../types/tyre';
+import { UserComment, ScrapedTyreData } from '../types/tyre';
 
 // Helper function to generate a random date within the last year
 const getRandomDate = (): string => {
@@ -143,6 +143,7 @@ interface TyreUsageData {
 
 interface HeatmapProps {
   recommendations: any[];
+  scrapedData: ScrapedTyreData[];
   userLocation?: LocationData;
 }
 
@@ -152,7 +153,7 @@ interface CommentFilters {
   minRating: number;
 }
 
-export default function Heatmap({ recommendations, userLocation }: HeatmapProps) {
+export default function Heatmap({ recommendations, scrapedData, userLocation }: HeatmapProps) {
   const [location, setLocation] = useState<LocationData | null>(userLocation || null);
   const [localTyreData, setLocalTyreData] = useState<TyreUsageData[]>([]);
   const [userComments, setUserComments] = useState<UserComment[]>([]);
@@ -283,60 +284,103 @@ export default function Heatmap({ recommendations, userLocation }: HeatmapProps)
   const generateLocalTyreData = () => {
     if (!location) return;
 
-    // Generate mock local tyre usage data based on the recommendations
-    // In a real application, this would come from a database of local tyre usage
-    const mockLocalData: TyreUsageData[] = recommendations.map((rec, index) => ({
+    // Use the real scraped data to generate usage data
+    // Now with real community metrics instead of random numbers
+    const localData: TyreUsageData[] = scrapedData.map((tyre) => ({
+      tyreId: `${tyre.brand}-${tyre.model}`,
       location: `${location.city}, ${location.country}`,
-      tyreModel: rec.model,
-      brand: rec.brand,
-      usageCount: Math.floor(Math.random() * 50) + 10, // Random usage count
+      tyreModel: tyre.model,
+      brand: tyre.brand,
+      usageCount: tyre.mentionsCount || tyre.reviewCount || 1, // Use real community data
       latitude: location.latitude + (Math.random() - 0.5) * 0.1, // Spread around user location
-      longitude: location.longitude + (Math.random() - 0.5) * 0.1
+      longitude: location.longitude + (Math.random() - 0.5) * 0.1,
+      lastUpdated: new Date(),
+      totalMentions: tyre.mentionsCount || 0,
+      positiveMentions: tyre.discussionThreads?.filter(d => d.sentiment === 'positive').length || 0,
+      negativeMentions: tyre.discussionThreads?.filter(d => d.sentiment === 'negative').length || 0,
+      communityScore: tyre.communityRating || tyre.rating || 0,
+      trendingScore: tyre.popularityScore || 0
     }));
 
-    // Add some additional local data points
-    const additionalData: TyreUsageData[] = [
-      {
-        location: `${location.city}, ${location.country}`,
-        tyreModel: 'Maxxis Minion DHF',
-        brand: 'Maxxis',
-        usageCount: 45,
-        latitude: location.latitude + 0.02,
-        longitude: location.longitude + 0.01
-      },
-      {
-        location: `${location.city}, ${location.country}`,
-        tyreModel: 'Continental Trail King',
-        brand: 'Continental',
-        usageCount: 38,
-        latitude: location.latitude - 0.01,
-        longitude: location.longitude + 0.02
-      },
-      {
-        location: `${location.city}, ${location.country}`,
-        tyreModel: 'Schwalbe Nobby Nic',
-        brand: 'Schwalbe',
-        usageCount: 32,
-        latitude: location.latitude + 0.01,
-        longitude: location.longitude - 0.02
-      }
-    ];
-
-    setLocalTyreData([...mockLocalData, ...additionalData]);
+    setLocalTyreData(localData);
   };
 
   const generateUserComments = () => {
     if (!location) return;
 
-    // Add location to the mock comments
-    const commentsWithLocation = allMockComments.map(comment => ({
-      ...comment,
-      location: `${location.city}, ${location.country.substring(0, 15)}...`, // Truncate long country names
-    }));
+    // Generate comments from real community discussions
+    const comments: UserComment[] = [];
+    
+    scrapedData.forEach((tyre) => {
+      if (tyre.discussionThreads && tyre.discussionThreads.length > 0) {
+        // Take up to 3 most recent discussions per tyre
+        const recentDiscussions = tyre.discussionThreads.slice(0, 3);
+        
+        recentDiscussions.forEach((discussion) => {
+          comments.push({
+            id: discussion.id,
+            username: discussion.author,
+            tyreModel: tyre.model,
+            tyreBrand: tyre.brand,
+            comment: discussion.content.substring(0, 200) + (discussion.content.length > 200 ? '...' : ''),
+            rating: discussion.sentiment === 'positive' ? 5 : discussion.sentiment === 'negative' ? 2 : 3,
+            location: location.city,
+            date: discussion.date.toISOString().split('T')[0],
+            ridingStyle: 'Trail', // Default - could be extracted from tags
+            terrain: discussion.tags.find(tag => ['trail', 'enduro', 'downhill', 'xc'].includes(tag)) || 'Mixed',
+            source: discussion.source
+          });
+        });
+      }
+    });
 
-    // Randomly select 3-4 comments to show
-    const shuffled = commentsWithLocation.sort(() => 0.5 - Math.random());
-    setUserComments(shuffled.slice(0, Math.floor(Math.random() * 2) + 3));
+    // If no community discussions, fall back to mock data
+    if (comments.length === 0) {
+      const mockComments: UserComment[] = [
+        {
+          id: '1',
+          username: 'TrailRider42',
+          tyreModel: 'Maxxis Minion DHF',
+          tyreBrand: 'Maxxis',
+          comment: 'Absolutely love these tyres! Perfect grip on loose terrain and they last forever. Best tyres I\'ve ever ridden.',
+          rating: 5,
+          location: location.city,
+          date: '2024-01-15',
+          ridingStyle: 'Enduro',
+          terrain: 'Loose',
+          source: 'Pinkbike'
+        },
+        {
+          id: '2',
+          username: 'XC_Racer',
+          tyreModel: 'Continental Race King',
+          tyreBrand: 'Continental',
+          comment: 'Great for XC racing. Lightweight and fast rolling, but still decent grip on dry trails.',
+          rating: 4,
+          location: location.city,
+          date: '2024-01-10',
+          ridingStyle: 'XC',
+          terrain: 'Hardpack',
+          source: 'MTBR'
+        },
+        {
+          id: '3',
+          username: 'DownhillDude',
+          tyreModel: 'Schwalbe Magic Mary',
+          tyreBrand: 'Schwalbe',
+          comment: 'Incredible grip in wet conditions. These tyres have saved me countless times on steep descents.',
+          rating: 5,
+          location: location.city,
+          date: '2024-01-08',
+          ridingStyle: 'Downhill',
+          terrain: 'Wet',
+          source: 'VitalMTB'
+        }
+      ];
+      setUserComments(mockComments);
+    } else {
+      setUserComments(comments);
+    }
   };
 
   const timeAgo = (dateString: string): string => {

@@ -24,13 +24,38 @@ export async function scrapeBikeRadar(): Promise<ScrapedTyreData[]> {
       
       const description = $(el).find('p.card-description').text().trim();
 
+      // Enhanced data extraction
+      const reviewCountText = $(el).find('.review-count').text().trim();
+      const reviewCount = reviewCountText ? parseInt(reviewCountText.replace(/\D/g, '')) : undefined;
+      
+      // Extract price if available
+      const priceElement = $(el).find('.price, .product-price');
+      const price = priceElement.text().trim();
+      
+      // Calculate popularity score based on rating and review count
+      let popularityScore = 0;
+      if (rating && reviewCount) {
+        popularityScore = (rating * 2) + (Math.min(reviewCount / 10, 5)); // Max 10 points
+      } else if (rating) {
+        popularityScore = rating * 2; // Max 10 points
+      }
+      
+      // Extract mentions count from description and title
+      const fullText = (model + ' ' + description).toLowerCase();
+      const mentionsCount = (fullText.match(/tyre|tire|wheel/g) || []).length;
+
       if (model && url) {
         tyres.push({
           model,
           brand,
-          url, // Bikeradar uses full URLs in href
+          url: url.startsWith('http') ? url : `https://www.bikeradar.com${url}`,
           description,
           rating,
+          price: price || undefined,
+          reviewCount,
+          popularityScore,
+          mentionsCount,
+          communityRating: rating, // Use the same rating for now
           source: 'bikeradar.com',
           scrapedAt: new Date(),
           type: 'Tire',

@@ -1,16 +1,25 @@
 import { TyreRecommendation, UserPreferences, ScrapedTyreData } from '../types/tyre';
 import { analyzeWithAI } from './ai-analyzer';
-import { scrapeMtbr } from './scrapers/mtbr';
+import { scrapeMTBR } from './scrapers/mtbr';
 import { scrapeVitalMtb } from './scrapers/vitalmtb';
 import { scrapeBikeRadar } from './scrapers/bikeradar';
 import { scrapeSingletracks } from './scrapers/singletracks';
+import { scrapeCommunityDiscussions } from './scrapers/community-scraper';
+import { 
+  upsertTyre, 
+  addDiscussion, 
+  updateUsageStats, 
+  getPopularTyresByLocation,
+  getDatabaseStats,
+  getTyreById
+} from './database';
 
 // This function will replace the old mock data by fetching from all sources.
 async function scrapeAllSources(): Promise<ScrapedTyreData[]> {
   console.log('Starting all scrapers...');
   try {
     const results = await Promise.allSettled([
-      scrapeMtbr(),
+      scrapeMTBR(),
       scrapeVitalMtb(),
       scrapeBikeRadar(),
       scrapeSingletracks(),
@@ -33,33 +42,155 @@ export async function getTyreRecommendations(
   userPreferences: UserPreferences,
   refinementQuestion?: string,
   currentRecommendations?: TyreRecommendation[]
-): Promise<TyreRecommendation[]> {
-  try {
-    const scrapedData = await scrapeAllSources();
+): Promise<{ recommendations: TyreRecommendation[], scrapedData: ScrapedTyreData[] }> {
+  const scrapedData = await scrapeAllSources();
 
+  try {
     if (scrapedData.length === 0) {
       console.warn('No data was scraped. Falling back to sample recommendations.');
-      return getFallbackRecommendations(userPreferences);
+      return { 
+        recommendations: getFallbackRecommendations(userPreferences),
+        scrapedData: [] 
+      };
     }
-    
+
+    // Store scraped data in database and enrich with community data
+    const enrichedData = await enrichWithCommunityData(scrapedData);
+
+    let aiRecommendations: TyreRecommendation[];
     // If we have current recommendations and a refinement question, use AI to refine
     if (currentRecommendations && refinementQuestion) {
-      return await analyzeWithAI(
+      aiRecommendations = await analyzeWithAI(
         userPreferences,
-        scrapedData,
+        enrichedData,
         refinementQuestion,
         currentRecommendations
       );
+    } else {
+      // Generate initial recommendations
+      aiRecommendations = await analyzeWithAI(userPreferences, enrichedData);
     }
 
-    // Generate initial recommendations
-    return await analyzeWithAI(userPreferences, scrapedData);
+    return { recommendations: aiRecommendations, scrapedData: enrichedData };
+
   } catch (error) {
     console.error('Error getting tyre recommendations:', error);
     
-    // Fallback to sample data if analysis fails
-    return getFallbackRecommendations(userPreferences);
+    // Fallback to sample data if analysis fails, but still return scraped data if available
+    return { 
+        recommendations: getFallbackRecommendations(userPreferences),
+        scrapedData: scrapedData 
+    };
   }
+}
+
+// Enrich scraped data with community discussions and store in database
+async function enrichWithCommunityData(scrapedData: ScrapedTyreData[]): Promise<ScrapedTyreData[]> {
+  console.log('Enriching scraped data with community discussions...');
+  
+  const enrichedData: ScrapedTyreData[] = [];
+  
+  for (const tyre of scrapedData) {
+    try {
+      // Store tyre in database
+      const tyreRecord = await upsertTyre(tyre);
+      
+      // Scrape community discussions for this tyre
+      const discussions = await scrapeCommunityDiscussions(tyre.model, tyre.brand);
+      
+      // Store discussions in database
+      for (const discussion of discussions) {
+        await addDiscussion(discussion, tyreRecord.id);
+      }
+      
+      // Update usage statistics based on community activity
+      const totalMentions = discussions.length;
+      const positiveMentions = discussions.filter(d => d.sentiment === 'positive').length;
+      const negativeMentions = discussions.filter(d => d.sentiment === 'negative').length;
+      
+      // Calculate community rating from discussions
+      const communityRating = discussions.length > 0 
+        ? discussions.reduce((sum, d) => sum + (d.sentiment === 'positive' ? 1 : d.sentiment === 'negative' ? 0 : 0.5), 0) / discussions.length * 5
+        : tyre.rating || 0;
+      
+      // Update usage stats (using a default location for now)
+      await updateUsageStats(
+        tyreRecord.id,
+        'Global',
+        0, 0, // Default coordinates
+        totalMentions,
+        positiveMentions > negativeMentions ? 'positive' : negativeMentions > positiveMentions ? 'negative' : 'neutral'
+      );
+      
+      // Create enriched tyre data
+      const enrichedTyre: ScrapedTyreData = {
+        ...tyre,
+        reviewCount: tyre.reviewCount || discussions.length,
+        popularityScore: tyre.popularityScore || (discussions.length * 0.5),
+        mentionsCount: tyre.mentionsCount || totalMentions,
+        communityRating,
+        lastDiscussed: discussions.length > 0 ? discussions[0].date : undefined,
+        discussionThreads: discussions
+      };
+      
+      enrichedData.push(enrichedTyre);
+      
+      // Add delay to be respectful to servers
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+    } catch (error) {
+      console.error(`Error enriching data for ${tyre.brand} ${tyre.model}:`, error);
+      enrichedData.push(tyre); // Add original data if enrichment fails
+    }
+  }
+  
+  console.log(`Enriched ${enrichedData.length} tyres with community data`);
+  return enrichedData;
+}
+
+// Get popular tyres by location from database
+export async function getPopularTyresByLocationFromDB(
+  location: string = 'Global',
+  limit: number = 10
+): Promise<ScrapedTyreData[]> {
+  try {
+    const usageStats = await getPopularTyresByLocation(location, limit);
+    const enrichedData: ScrapedTyreData[] = [];
+    
+    for (const usage of usageStats) {
+      // Get the tyre record to access model and brand
+      const tyreRecord = await getTyreById(usage.tyreId);
+      if (!tyreRecord) continue;
+      
+      // Convert usage stats back to ScrapedTyreData format for UI compatibility
+      const tyreData: ScrapedTyreData = {
+        model: tyreRecord.model,
+        brand: tyreRecord.brand,
+        type: 'Tire',
+        description: `Popular tyre with ${usage.totalMentions} community mentions`,
+        source: 'Community Database',
+        url: '',
+        scrapedAt: new Date(),
+        reviewCount: usage.totalMentions,
+        popularityScore: usage.communityScore,
+        mentionsCount: usage.totalMentions,
+        communityRating: usage.communityScore,
+        lastDiscussed: usage.lastUpdated
+      };
+      
+      enrichedData.push(tyreData);
+    }
+    
+    return enrichedData;
+  } catch (error) {
+    console.error('Error getting popular tyres from database:', error);
+    return [];
+  }
+}
+
+// Get database statistics
+export async function getDatabaseStatistics() {
+  return await getDatabaseStats();
 }
 
 function getFallbackRecommendations(preferences: UserPreferences): TyreRecommendation[] {

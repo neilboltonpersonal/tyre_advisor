@@ -39,6 +39,42 @@ export interface ScrapedTyreData {
   source: string;
   url: string;
   scrapedAt: Date;
+  reviewCount?: number;
+  popularityScore?: number;
+  mentionsCount?: number;
+  communityRating?: number;
+  lastDiscussed?: Date;
+  discussionThreads?: CommunityDiscussion[];
+}
+
+export interface CommunityDiscussion {
+  id: string;
+  title: string;
+  content: string;
+  author: string;
+  date: Date;
+  source: string;
+  url: string;
+  replies: number;
+  views: number;
+  sentiment: 'positive' | 'negative' | 'neutral';
+  tags: string[];
+}
+
+export interface TyreUsageData {
+  tyreId: string;
+  model: string;
+  brand: string;
+  location: string;
+  usageCount: number;
+  latitude: number;
+  longitude: number;
+  lastUpdated: Date;
+  totalMentions: number;
+  positiveMentions: number;
+  negativeMentions: number;
+  communityScore: number;
+  trendingScore: number;
 }
 
 export interface UserComment {
@@ -53,4 +89,61 @@ export interface UserComment {
   ridingStyle: string;
   terrain: string;
   source: string;
+}
+
+export interface TyreDatabase {
+  tyres: TyreRecord[];
+  discussions: DiscussionRecord[];
+  usageStats: UsageRecord[];
+  lastSync: Date;
+}
+
+export interface TyreRecord {
+  id: string;
+  model: string;
+  brand: string;
+  type: string;
+  description: string;
+  price?: string;
+  rating?: number;
+  reviewCount: number;
+  popularityScore: number;
+  mentionsCount: number;
+  communityRating: number;
+  lastDiscussed?: Date;
+  sources: string[];
+  urls: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface DiscussionRecord {
+  id: string;
+  tyreId: string;
+  title: string;
+  content: string;
+  author: string;
+  date: Date;
+  source: string;
+  url: string;
+  replies: number;
+  views: number;
+  sentiment: 'positive' | 'negative' | 'neutral';
+  tags: string[];
+  createdAt: Date;
+}
+
+export interface UsageRecord {
+  id: string;
+  tyreId: string;
+  location: string;
+  latitude: number;
+  longitude: number;
+  usageCount: number;
+  totalMentions: number;
+  positiveMentions: number;
+  negativeMentions: number;
+  communityScore: number;
+  trendingScore: number;
+  lastUpdated: Date;
 } 

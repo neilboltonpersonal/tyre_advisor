@@ -25,12 +25,13 @@ import {
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import { IconBike, IconWheel, IconSearch, IconMessageCircle, IconRefresh, IconMapPin } from '@tabler/icons-react';
-import { TyreRecommendation } from '../types/tyre';
+import { TyreRecommendation, ScrapedTyreData } from '../types/tyre';
 import { getTyreRecommendations } from '../lib/actions';
 import Heatmap from '../components/Heatmap';
 
 export default function HomePage() {
   const [recommendations, setRecommendations] = useState<TyreRecommendation[]>([]);
+  const [scrapedData, setScrapedData] = useState<ScrapedTyreData[]>([]);
   const [loading, setLoading] = useState(false);
   const [showRefinement, setShowRefinement] = useState(false);
   const [refinementQuestion, setRefinementQuestion] = useState('');
@@ -62,9 +63,11 @@ export default function HomePage() {
   const handleSubmit = form.onSubmit(async (values) => {
     setLoading(true);
     setRecommendations([]); // Clear previous recommendations
+    setScrapedData([]);
     try {
-      const results = await getTyreRecommendations(values);
+      const { recommendations: results, scrapedData: rawData } = await getTyreRecommendations(values);
       setRecommendations(results);
+      setScrapedData(rawData);
       setActiveTab('recommendations');
       notifications.show({
         title: 'Recommendations Ready!',
@@ -88,12 +91,13 @@ export default function HomePage() {
     
     setLoading(true);
     try {
-      const refinedResults = await getTyreRecommendations(
+      const { recommendations: refinedResults, scrapedData: rawData } = await getTyreRecommendations(
         form.values,
         refinementQuestion,
         recommendations
       );
       setRecommendations(refinedResults);
+      setScrapedData(rawData);
       setRefinementQuestion('');
       notifications.show({
         title: 'Refined Recommendations',
@@ -401,7 +405,10 @@ export default function HomePage() {
               </Tabs.Panel>
 
               <Tabs.Panel value="heatmap" pt="md">
-                <Heatmap recommendations={recommendations} />
+                <Heatmap
+                  recommendations={recommendations}
+                  scrapedData={scrapedData}
+                />
               </Tabs.Panel>
             </Tabs>
           </Card>
