@@ -29,6 +29,21 @@ export async function refreshDatabaseWithRealData(): Promise<{
   try {
     console.log('Refreshing database with real scraped data...');
     
+    // First, scrape fresh data
+    const { scrapeAllSources } = await import('./tyre-advisor');
+    console.log('Starting to scrape all sources...');
+    const scrapedData = await scrapeAllSources();
+    console.log(`Scraped ${scrapedData.length} tyres from all sources`);
+    
+    if (scrapedData.length === 0) {
+      console.log('No data was scraped, this might indicate an issue with the scrapers');
+      return {
+        success: false,
+        message: 'No data was scraped from any source. This might indicate an issue with the scrapers or network connectivity.',
+        tyreCount: 0
+      };
+    }
+    
     // Clear the current database
     await persistentDB.saveDatabase({
       tyres: [],
@@ -37,19 +52,20 @@ export async function refreshDatabaseWithRealData(): Promise<{
       lastSync: new Date()
     });
     
-    // Load fresh data (this will trigger scraping)
+    // Load fresh data (this will trigger scraping again and store the data)
     const db = await persistentDB.loadDatabase();
     
     return {
       success: true,
-      message: `Database refreshed successfully with ${db.tyres.length} real tyres`,
-      tyreCount: db.tyres.length
+      message: `Database refreshed successfully with ${scrapedData.length} real tyres from scrapers`,
+      tyreCount: scrapedData.length
     };
   } catch (error) {
     console.error('Error refreshing database:', error);
     return {
       success: false,
-      message: `Failed to refresh database: ${error instanceof Error ? error.message : 'Unknown error'}`
+      message: `Failed to refresh database: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      tyreCount: 0
     };
   }
 }

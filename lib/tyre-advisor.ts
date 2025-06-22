@@ -19,25 +19,41 @@ export async function scrapeAllSources(): Promise<ScrapedTyreData[]> {
   console.log('Scraping all tyre sources...');
   
   try {
+    console.log('Starting individual scrapers...');
+    
     const results = await Promise.allSettled([
-      scrapeMTBR(),
-      scrapeVitalMtb(),
-      scrapeBikeRadar(),
-      scrapeSingletracks(),
+      scrapeMTBR().then(data => {
+        console.log('MTBR scraper completed with', data.length, 'tyres');
+        return data;
+      }),
+      scrapeVitalMtb().then(data => {
+        console.log('VitalMTB scraper completed with', data.length, 'tyres');
+        return data;
+      }),
+      scrapeBikeRadar().then(data => {
+        console.log('BikeRadar scraper completed with', data.length, 'tyres');
+        return data;
+      }),
+      scrapeSingletracks().then(data => {
+        console.log('Singletracks scraper completed with', data.length, 'tyres');
+        return data;
+      }),
     ]);
 
     const allTyres: ScrapedTyreData[] = [];
     
     results.forEach((result, index) => {
+      const sourceNames = ['MTBR', 'VitalMTB', 'BikeRadar', 'Singletracks'];
       if (result.status === 'fulfilled') {
-        console.log(`Source ${index + 1} scraped successfully: ${result.value.length} tyres`);
+        console.log(`${sourceNames[index]} scraped successfully: ${result.value.length} tyres`);
         allTyres.push(...result.value);
       } else {
-        console.error(`Source ${index + 1} failed:`, result.reason);
+        console.error(`${sourceNames[index]} failed:`, result.reason);
       }
     });
 
     console.log(`Total tyres scraped: ${allTyres.length}`);
+    console.log('Sample tyres:', allTyres.slice(0, 3).map(t => `${t.brand} ${t.model}`));
     return allTyres;
   } catch (error) {
     console.error('Error scraping sources:', error);
