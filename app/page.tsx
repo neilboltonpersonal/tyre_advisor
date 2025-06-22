@@ -59,18 +59,20 @@ export default function HomePage() {
     },
   });
 
-  const handleSubmit = async (values: typeof form.values) => {
+  const handleSubmit = form.onSubmit(async (values) => {
     setLoading(true);
+    setRecommendations([]); // Clear previous recommendations
     try {
       const results = await getTyreRecommendations(values);
       setRecommendations(results);
       setActiveTab('recommendations');
       notifications.show({
         title: 'Recommendations Ready!',
-        message: 'We found some great tyre options for you.',
+        message: `We found ${results.length} great tyre options for you.`,
         color: 'green',
       });
     } catch (error) {
+      console.error(error);
       notifications.show({
         title: 'Error',
         message: 'Failed to get recommendations. Please try again.',
@@ -79,7 +81,7 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
-  };
+  });
 
   const handleRefinement = async () => {
     if (!refinementQuestion.trim()) return;
@@ -99,6 +101,7 @@ export default function HomePage() {
         color: 'blue',
       });
     } catch (error) {
+      console.error(error);
       notifications.show({
         title: 'Error',
         message: 'Failed to refine recommendations. Please try again.',
@@ -135,7 +138,7 @@ export default function HomePage() {
 
         {/* Main Form */}
         <Card shadow="sm" padding="xl" radius="md" withBorder>
-          <form onSubmit={form.onSubmit(handleSubmit)}>
+          <form onSubmit={handleSubmit}>
             <Stack gap="md">
               <Title order={2} size="h3">
                 Tell us about your riding

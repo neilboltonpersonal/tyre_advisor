@@ -34,6 +34,8 @@ export async function getTyreRecommendations(
   refinementQuestion?: string,
   currentRecommendations?: TyreRecommendation[]
 ): Promise<TyreRecommendation[]> {
+  'use server';
+  
   try {
     const scrapedData = await scrapeAllSources();
 
