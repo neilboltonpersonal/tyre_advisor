@@ -22,6 +22,26 @@ export async function scrapeVitalMtb(): Promise<ScrapedTyreData[]> {
       const rating = ratingText ? parseFloat(ratingText) : undefined;
       const description = $(el).find('.short-description').text().trim();
 
+      // Enhanced data extraction
+      const reviewCountText = $(el).find('.review-count, .reviews-count').text().trim();
+      const reviewCount = reviewCountText ? parseInt(reviewCountText.replace(/\D/g, '')) : undefined;
+      
+      // Extract price if available
+      const priceElement = $(el).find('.price, .msrp, .cost');
+      const price = priceElement.text().trim();
+      
+      // Calculate popularity score based on rating and review count
+      let popularityScore = 0;
+      if (rating && reviewCount) {
+        popularityScore = (rating * 2) + (Math.min(reviewCount / 10, 5)); // Max 10 points
+      } else if (rating) {
+        popularityScore = rating * 2; // Max 10 points
+      }
+      
+      // Extract mentions count from description and title
+      const fullText = (model + ' ' + description).toLowerCase();
+      const mentionsCount = (fullText.match(/tyre|tire|wheel/g) || []).length;
+
       if (model && url && brand) {
         tyres.push({
           model,
@@ -29,6 +49,11 @@ export async function scrapeVitalMtb(): Promise<ScrapedTyreData[]> {
           url: `https://www.vitalmtb.com${url}`,
           description,
           rating,
+          price: price || undefined,
+          reviewCount,
+          popularityScore,
+          mentionsCount,
+          communityRating: rating, // Use the same rating for now
           source: 'vitalmtb.com',
           scrapedAt: new Date(),
           type: 'Tire',

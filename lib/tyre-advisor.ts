@@ -15,25 +15,32 @@ import {
 } from './database';
 
 // This function will replace the old mock data by fetching from all sources.
-async function scrapeAllSources(): Promise<ScrapedTyreData[]> {
-  console.log('Starting all scrapers...');
+export async function scrapeAllSources(): Promise<ScrapedTyreData[]> {
+  console.log('Scraping all tyre sources...');
+  
   try {
     const results = await Promise.allSettled([
       scrapeMTBR(),
       scrapeVitalMtb(),
       scrapeBikeRadar(),
       scrapeSingletracks(),
-      // Add existing scrapers here if they are in separate files
     ]);
 
-    const successfulData = results
-      .filter(result => result.status === 'fulfilled')
-      .flatMap(result => (result as PromiseFulfilledResult<ScrapedTyreData[]>).value);
+    const allTyres: ScrapedTyreData[] = [];
     
-    console.log(`Scraping complete. Found ${successfulData.length} total tyres.`);
-    return successfulData;
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        console.log(`Source ${index + 1} scraped successfully: ${result.value.length} tyres`);
+        allTyres.push(...result.value);
+      } else {
+        console.error(`Source ${index + 1} failed:`, result.reason);
+      }
+    });
+
+    console.log(`Total tyres scraped: ${allTyres.length}`);
+    return allTyres;
   } catch (error) {
-    console.error('An error occurred during scraping:', error);
+    console.error('Error scraping sources:', error);
     return [];
   }
 }
