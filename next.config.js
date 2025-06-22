@@ -2,6 +2,7 @@
 const nextConfig = {
   transpilePackages: ['undici', 'cheerio'],
   experimental: {
+    serverComponentsExternalPackages: ['cheerio'],
   },
   images: {
     domains: [
