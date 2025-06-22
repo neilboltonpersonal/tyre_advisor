@@ -26,7 +26,7 @@ import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
 import { IconBike, IconWheel, IconSearch, IconMessageCircle, IconRefresh, IconMapPin } from '@tabler/icons-react';
 import { TyreRecommendation, ScrapedTyreData } from '../types/tyre';
-import { getTyreRecommendations } from '../lib/actions';
+import { getTyreRecommendations, refreshDatabaseWithRealData } from '../lib/actions';
 import Heatmap from '../components/Heatmap';
 
 export default function HomePage() {
@@ -35,7 +35,8 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [showRefinement, setShowRefinement] = useState(false);
   const [refinementQuestion, setRefinementQuestion] = useState('');
-  const [activeTab, setActiveTab] = useState<string | null>('recommendations');
+  const [activeTab, setActiveTab] = useState<string | null>(null);
+  const [refreshingData, setRefreshingData] = useState(false);
 
   const form = useForm({
     initialValues: {
@@ -116,6 +117,41 @@ export default function HomePage() {
     }
   };
 
+  const handleRefreshData = async () => {
+    setRefreshingData(true);
+    try {
+      const result = await refreshDatabaseWithRealData();
+      if (result.success) {
+        notifications.show({
+          title: 'Database Refreshed',
+          message: result.message,
+          color: 'green',
+        });
+        // Reload the current recommendations to show fresh data
+        if (form.values.ridingStyle) {
+          // Trigger a new search with current form values
+          const { recommendations: results, scrapedData: rawData } = await getTyreRecommendations(form.values);
+          setRecommendations(results);
+          setScrapedData(rawData);
+        }
+      } else {
+        notifications.show({
+          title: 'Refresh Failed',
+          message: result.message,
+          color: 'red',
+        });
+      }
+    } catch (error) {
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to refresh database',
+        color: 'red',
+      });
+    } finally {
+      setRefreshingData(false);
+    }
+  };
+
   const getRankColor = (index: number): string => {
     if (index === 0) return 'gold';
     if (index === 1) return 'silver';
@@ -128,16 +164,26 @@ export default function HomePage() {
     <Container size="lg" py="xl">
       <Stack gap="xl">
         {/* Header */}
-        <Group justify="center" mb="xl">
-          <IconBike size={48} color="#228be6" />
-          <div>
-            <Title order={1} ta="center" c="blue">
+        <Group justify="space-between" align="center">
+          <Stack gap="xs">
+            <Title order={1} size="h2" c="white">
+              <IconWheel size={32} style={{ marginRight: 8 }} />
               Tyre Advisor
             </Title>
-            <Text c="dimmed" ta="center" size="lg">
-              Find your perfect tyre match
+            <Text c="dimmed" size="sm">
+              Get personalized tyre recommendations based on your riding style and preferences
             </Text>
-          </div>
+          </Stack>
+          <Button
+            variant="outline"
+            color="gray"
+            leftSection={<IconRefresh size={16} />}
+            onClick={handleRefreshData}
+            loading={refreshingData}
+            disabled={refreshingData}
+          >
+            Refresh Data
+          </Button>
         </Group>
 
         {/* Main Form */}
