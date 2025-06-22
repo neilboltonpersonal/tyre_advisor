@@ -8,7 +8,7 @@ import {
   ScrapedTyreData,
   CommunityDiscussion 
 } from '../types/tyre';
-import { simpleDB } from './simple-database';
+import { persistentDB } from './persistent-database';
 
 const LOCAL_DB_PATH = path.join(process.cwd(), 'data', 'tyre-database.json');
 
@@ -30,9 +30,7 @@ async function ensureDataDirectory() {
 // Initialize empty database
 async function initializeDatabase(): Promise<TyreDatabase> {
   if (isServerless) {
-    const db = await simpleDB.initializeDatabase();
-    await simpleDB.seedDatabase(); // Seed with sample data
-    return db;
+    return await persistentDB.loadDatabase();
   } else {
     const db: TyreDatabase = {
       tyres: [],
@@ -51,14 +49,8 @@ async function initializeDatabase(): Promise<TyreDatabase> {
 export async function loadDatabase(): Promise<TyreDatabase> {
   try {
     if (isServerless) {
-      // In serverless environment, use simple database
-      const db = await simpleDB.loadDatabase();
-      if (db.tyres.length === 0) {
-        // If database is empty, seed it with sample data
-        await simpleDB.seedDatabase();
-        return await simpleDB.loadDatabase();
-      }
-      return db;
+      // In serverless environment, use persistent database
+      return await persistentDB.loadDatabase();
     } else {
       // In local development, use local file
       await ensureDataDirectory();
@@ -93,8 +85,8 @@ export async function loadDatabase(): Promise<TyreDatabase> {
 // Save database to cloud or local file
 async function saveDatabase(db: TyreDatabase): Promise<void> {
   if (isServerless) {
-    // In serverless environment, save to simple database
-    await simpleDB.saveDatabase(db);
+    // In serverless environment, save to persistent database
+    await persistentDB.saveDatabase(db);
   } else {
     // In local development, save to local file
     await ensureDataDirectory();
@@ -243,6 +235,54 @@ export async function updateUsageStats(
     await saveDatabase(db);
     return newUsage;
   }
+}
+
+// Create usage statistics for all tyres in a location (for map data points)
+export async function createUsageStatsForLocation(
+  location: string,
+  latitude: number,
+  longitude: number
+): Promise<void> {
+  const db = await loadDatabase();
+  
+  // Create usage stats for each tyre in the database
+  for (const tyre of db.tyres) {
+    // Check if usage stats already exist for this tyre and location
+    const existingUsage = db.usageStats.find(u => 
+      u.tyreId === tyre.id && u.location === location
+    );
+    
+    if (!existingUsage) {
+      // Create new usage record with realistic data
+      const usageCount = tyre.reviewCount || Math.floor(Math.random() * 100) + 10;
+      const mentions = tyre.mentionsCount || Math.floor(Math.random() * 50) + 5;
+      const positiveMentions = Math.floor(mentions * 0.7); // 70% positive
+      const negativeMentions = Math.floor(mentions * 0.1); // 10% negative
+      
+      const newUsage: UsageRecord = {
+        id: generateId(),
+        tyreId: tyre.id,
+        location,
+        latitude: latitude + (Math.random() - 0.5) * 0.1, // Spread around location
+        longitude: longitude + (Math.random() - 0.5) * 0.1,
+        usageCount,
+        totalMentions: mentions,
+        positiveMentions,
+        negativeMentions,
+        communityScore: 0,
+        trendingScore: 0,
+        lastUpdated: new Date()
+      };
+      
+      newUsage.communityScore = calculateCommunityScore(newUsage);
+      newUsage.trendingScore = calculateTrendingScore(newUsage);
+      
+      db.usageStats.push(newUsage);
+    }
+  }
+  
+  await saveDatabase(db);
+  console.log(`Created usage stats for ${db.tyres.length} tyres in ${location}`);
 }
 
 // Calculate community score based on mentions and sentiment

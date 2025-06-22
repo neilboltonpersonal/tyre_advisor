@@ -23,6 +23,7 @@ import {
 import { IconMapPin, IconLocation, IconAlertCircle, IconStar, IconMessage, IconFilter, IconFilterOff, IconCalendar, IconWorld } from '@tabler/icons-react';
 import dynamic from 'next/dynamic';
 import { UserComment, ScrapedTyreData } from '../types/tyre';
+import { createUsageStatsForLocation } from '../lib/database';
 
 // Helper function to generate a random date within the last year
 const getRandomDate = (): string => {
@@ -283,6 +284,17 @@ export default function Heatmap({ recommendations, scrapedData, userLocation }: 
 
   const generateLocalTyreData = () => {
     if (!location) return;
+
+    // Create usage statistics for the detected location
+    createUsageStatsForLocation(
+      `${location.city}, ${location.country}`,
+      location.latitude,
+      location.longitude
+    ).then(() => {
+      console.log('Usage statistics created for map data points');
+    }).catch(error => {
+      console.error('Error creating usage statistics:', error);
+    });
 
     // Use the real scraped data to generate usage data
     // Now with real community metrics instead of random numbers
