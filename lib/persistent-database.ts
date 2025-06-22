@@ -2,7 +2,7 @@ import { TyreDatabase, ScrapedTyreData } from '../types/tyre';
 import { scrapeAllSources } from './tyre-advisor';
 
 // GitHub Gist configuration for persistent storage
-const GIST_ID = 'your-gist-id'; // We'll create this
+const GIST_ID = 'b15d51e15f53553ad0f1a4db2e52fc02';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN; // Add this to Vercel env vars
 
 // Simple in-memory cache for performance
