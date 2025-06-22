@@ -1,3 +1,5 @@
+"use server";
+
 import { TyreRecommendation, UserPreferences, ScrapedTyreData } from '../types/tyre';
 import { analyzeWithAI } from './ai-analyzer';
 import { scrapeMtbr } from './scrapers/mtbr';
@@ -34,8 +36,6 @@ export async function getTyreRecommendations(
   refinementQuestion?: string,
   currentRecommendations?: TyreRecommendation[]
 ): Promise<TyreRecommendation[]> {
-  'use server';
-  
   try {
     const scrapedData = await scrapeAllSources();
 
