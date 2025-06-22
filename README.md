@@ -2,6 +2,8 @@
 
 A modern web application that provides personalized tyre recommendations for cyclists based on their riding style, preferences, and requirements. The application scrapes data from cycling websites and uses AI-powered analysis to deliver tailored suggestions.
 
+<!-- Updated for Vercel deployment -->
+
 ## Features
 
 - **Personalized Recommendations**: Get tyre suggestions based on your riding style, terrain, weather conditions, and preferences
