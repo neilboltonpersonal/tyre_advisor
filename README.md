@@ -136,4 +136,4 @@ This application is for educational and informational purposes. Always verify ty
 
 ## Support
 
-If you encounter any issues or have questions, please open an issue on GitHub. 
+If you encounter any issues or have questions, please open an issue on GitHub.
