@@ -37,6 +37,22 @@ interface MapComponentProps {
 //   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 // });
 
+// Component to fit bounds
+function FitBounds({ tyreData }: { tyreData: TyreUsageData[] }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (tyreData.length > 1) { // Only fit bounds if there's more than one point
+      const bounds = L.latLngBounds(
+        tyreData.map(data => [data.latitude, data.longitude])
+      );
+      map.fitBounds(bounds.pad(0.2)); // Use slightly more padding
+    }
+  }, [tyreData, map]);
+
+  return null;
+}
+
 // Component to invalidate map size on visibility change
 function InvalidateSizeOnVisible() {
     const map = useMap();
@@ -75,7 +91,7 @@ export default function MapComponent({ userLocation, tyreData, getIntensityColor
   return (
     <MapContainer
       center={[userLocation.latitude, userLocation.longitude]}
-      zoom={14}
+      zoom={13}
       style={{ height: '100%', width: '100%' }}
       scrollWheelZoom={false} // Prevent zooming with scroll wheel
     >
@@ -126,6 +142,7 @@ export default function MapComponent({ userLocation, tyreData, getIntensityColor
         );
       })}
 
+      <FitBounds tyreData={tyreData} />
       <InvalidateSizeOnVisible />
     </MapContainer>
   );
