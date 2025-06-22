@@ -77,6 +77,9 @@ function MapUpdater({ userLocation, tyreData }: { userLocation: LocationData, ty
 }
 
 export default function MapComponent({ userLocation, tyreData, getIntensityColor }: MapComponentProps) {
+  console.log('MapComponent received tyreData:', tyreData.length, 'points');
+  console.log('User location:', userLocation);
+  
   const getUsageIntensity = (count: number): 'low' | 'medium' | 'high' => {
     if (count < 20) return 'low';
     if (count < 35) return 'medium';
@@ -110,6 +113,8 @@ export default function MapComponent({ userLocation, tyreData, getIntensityColor
         const intensity = getUsageIntensity(data.usageCount);
         const color = getIntensityColor(intensity);
         const radius = Math.max(50, Math.min(200, data.usageCount * 3)); // Scale radius by usage count
+
+        console.log(`Rendering tyre point ${index}:`, data.tyreModel, 'at', data.latitude, data.longitude, 'with usage', data.usageCount);
 
         return (
           <Circle

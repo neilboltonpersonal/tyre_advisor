@@ -219,16 +219,16 @@ function estimatePriceRange(tyre: ScrapedTyreData): string {
   
   // Estimate based on brand and type
   if (tyre.brand === 'Maxxis' || tyre.brand === 'Continental') {
-    return '$60-80';
+    return '£47-63';
   }
   if (tyre.brand === 'Schwalbe' || tyre.brand === 'Michelin') {
-    return '$50-70';
+    return '£40-55';
   }
   if (tyre.brand === 'Specialized' || tyre.brand === 'Bontrager') {
-    return '$40-60';
+    return '£32-47';
   }
   
-  return '$45-65';
+  return '£36-51';
 }
 
 function refineRecommendations(
@@ -282,7 +282,7 @@ function getFallbackRecommendations(preferences: UserPreferences): TyreRecommend
       brand: 'Maxxis',
       type: 'Downhill/Trail',
       bestFor: 'Aggressive trail and enduro riding',
-      priceRange: '$60-80',
+      priceRange: '£47-63',
       rating: 4.8,
       description: 'Excellent grip and durability for aggressive riding',
       pros: ['Excellent grip', 'Durable', 'Good in wet conditions'],
@@ -294,7 +294,7 @@ function getFallbackRecommendations(preferences: UserPreferences): TyreRecommend
       brand: 'Continental',
       type: 'Trail/All Mountain',
       bestFor: 'Versatile trail riding',
-      priceRange: '$50-70',
+      priceRange: '£40-55',
       rating: 4.5,
       description: 'Balanced performance for mixed terrain',
       pros: ['Good all-around performance', 'Lightweight', 'Fast rolling'],
@@ -306,7 +306,7 @@ function getFallbackRecommendations(preferences: UserPreferences): TyreRecommend
       brand: 'Schwalbe',
       type: 'Cross Country/Trail',
       bestFor: 'Fast trail and XC riding',
-      priceRange: '$45-65',
+      priceRange: '£36-51',
       rating: 4.3,
       description: 'Fast rolling with good grip for XC and light trail use',
       pros: ['Fast rolling', 'Lightweight', 'Good for XC'],
@@ -318,7 +318,7 @@ function getFallbackRecommendations(preferences: UserPreferences): TyreRecommend
       brand: 'Michelin',
       type: 'Enduro/Downhill',
       bestFor: 'Aggressive enduro and downhill riding',
-      priceRange: '$70-90',
+      priceRange: '£55-71',
       rating: 4.7,
       description: 'Aggressive enduro tyre with excellent grip in all conditions',
       pros: ['Excellent grip', 'Very durable', 'All-weather performance'],
@@ -330,7 +330,7 @@ function getFallbackRecommendations(preferences: UserPreferences): TyreRecommend
       brand: 'WTB',
       type: 'Trail',
       bestFor: 'Versatile trail riding',
-      priceRange: '$40-60',
+      priceRange: '£32-47',
       rating: 4.2,
       description: 'Versatile trail tyre with good all-around performance',
       pros: ['Affordable', 'Good all-around performance', 'Reliable'],
@@ -342,7 +342,7 @@ function getFallbackRecommendations(preferences: UserPreferences): TyreRecommend
       brand: 'Vittoria',
       type: 'Enduro/Trail',
       bestFor: 'Aggressive enduro and trail riding',
-      priceRange: '$65-85',
+      priceRange: '£51-67',
       rating: 4.6,
       description: 'Aggressive enduro tyre with excellent grip and durability',
       pros: ['Excellent grip', 'Durable', 'Great for technical terrain'],
@@ -354,7 +354,7 @@ function getFallbackRecommendations(preferences: UserPreferences): TyreRecommend
       brand: 'Pirelli',
       type: 'Cross Country',
       bestFor: 'Fast cross country and racing',
-      priceRange: '$50-70',
+      priceRange: '£40-55',
       rating: 4.2,
       description: 'Fast rolling XC tyre with good grip for racing',
       pros: ['Fast rolling', 'Lightweight', 'Good for racing'],
@@ -366,7 +366,7 @@ function getFallbackRecommendations(preferences: UserPreferences): TyreRecommend
       brand: 'Maxxis',
       type: 'Trail/Enduro',
       bestFor: 'Versatile trail and enduro riding',
-      priceRange: '$55-75',
+      priceRange: '£43-59',
       rating: 4.5,
       description: 'Versatile trail tyre with excellent grip and good rolling speed',
       pros: ['Excellent grip', 'Good rolling speed', 'Versatile'],
@@ -378,7 +378,7 @@ function getFallbackRecommendations(preferences: UserPreferences): TyreRecommend
       brand: 'Schwalbe',
       type: 'Downhill/Enduro',
       bestFor: 'Aggressive downhill and enduro riding',
-      priceRange: '$70-90',
+      priceRange: '£55-71',
       rating: 4.7,
       description: 'Aggressive downhill tyre with exceptional grip in all conditions',
       pros: ['Exceptional grip', 'All-weather performance', 'Very durable'],
@@ -390,7 +390,7 @@ function getFallbackRecommendations(preferences: UserPreferences): TyreRecommend
       brand: 'Hutchinson',
       type: 'Trail/All Mountain',
       bestFor: 'Versatile all-mountain riding',
-      priceRange: '$50-70',
+      priceRange: '£40-55',
       rating: 4.3,
       description: 'Versatile all-mountain tyre with good grip and rolling speed',
       pros: ['Good all-around performance', 'Tubeless ready', 'Versatile'],
