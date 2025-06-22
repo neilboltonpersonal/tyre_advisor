@@ -154,18 +154,24 @@ export default function HomePage() {
   };
 
   const handleTestScraping = async () => {
+    console.log('Test scraping button clicked');
     setTestingScraping(true);
     try {
+      console.log('Fetching from /api/test-scraping...');
       const response = await fetch('/api/test-scraping');
+      console.log('Response status:', response.status);
       const result = await response.json();
+      console.log('Test scraping result:', result);
       
       if (result.success) {
+        console.log('Showing success notification');
         notifications.show({
           title: 'Scraping Test Successful',
           message: `Found ${result.tyreCount} tyres. Sample: ${result.tyres.map((t: any) => `${t.brand} ${t.model}`).join(', ')}`,
           color: 'green',
         });
       } else {
+        console.log('Showing error notification');
         notifications.show({
           title: 'Scraping Test Failed',
           message: result.error || 'Unknown error occurred',
@@ -173,6 +179,7 @@ export default function HomePage() {
         });
       }
     } catch (error) {
+      console.error('Test scraping error:', error);
       notifications.show({
         title: 'Test Error',
         message: 'Failed to test scraping functionality',
