@@ -52,4 +52,5 @@ export interface UserComment {
   date: string;
   ridingStyle: string;
   terrain: string;
+  source: string;
 } 

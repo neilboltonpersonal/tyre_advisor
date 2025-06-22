@@ -43,7 +43,8 @@ const allMockComments: Omit<UserComment, 'location'>[] = [
     rating: 5,
     date: getRandomDate(),
     ridingStyle: 'Enduro',
-    terrain: 'Rocky trails'
+    terrain: 'Rocky trails',
+    source: 'Pinkbike',
   },
   {
     id: '2',
@@ -54,7 +55,8 @@ const allMockComments: Omit<UserComment, 'location'>[] = [
     rating: 4,
     date: getRandomDate(),
     ridingStyle: 'Cross Country',
-    terrain: 'Mixed terrain'
+    terrain: 'Mixed terrain',
+    source: 'Singletrackworld',
   },
   {
     id: '3',
@@ -65,7 +67,8 @@ const allMockComments: Omit<UserComment, 'location'>[] = [
     rating: 5,
     date: getRandomDate(),
     ridingStyle: 'Downhill',
-    terrain: 'Steep descents'
+    terrain: 'Steep descents',
+    source: 'Pinkbike',
   },
   {
     id: '4',
@@ -76,7 +79,8 @@ const allMockComments: Omit<UserComment, 'location'>[] = [
     rating: 4,
     date: getRandomDate(),
     ridingStyle: 'Trail',
-    terrain: 'Technical trails'
+    terrain: 'Technical trails',
+    source: 'Singletrackworld',
   },
   {
     id: '5',
@@ -87,7 +91,8 @@ const allMockComments: Omit<UserComment, 'location'>[] = [
     rating: 5,
     date: getRandomDate(),
     ridingStyle: 'Gravel',
-    terrain: 'Gravel roads'
+    terrain: 'Gravel roads',
+    source: 'Pinkbike',
   },
   {
     id: '6',
@@ -98,7 +103,8 @@ const allMockComments: Omit<UserComment, 'location'>[] = [
     rating: 5,
     date: getRandomDate(),
     ridingStyle: 'All Mountain',
-    terrain: 'Varied terrain'
+    terrain: 'Varied terrain',
+    source: 'Singletrackworld',
   }
 ];
 
@@ -586,11 +592,16 @@ export default function Heatmap({ recommendations, userLocation }: HeatmapProps)
                     <Group gap="xs" c="dimmed">
                       <IconWorld size={14} />
                       <Text size="xs">{comment.location}</Text>
-                    </Group>
-                    <Group gap="xs" c="dimmed">
-                      <IconCalendar size={14} />
+                      <IconCalendar size={14} style={{ marginLeft: 8 }} />
                       <Text size="xs">{timeAgo(comment.date)}</Text>
                     </Group>
+                    <Badge 
+                      variant="light"
+                      size="xs"
+                      color={comment.source === 'Pinkbike' ? 'pink' : 'cyan'}
+                    >
+                      {comment.source}
+                    </Badge>
                   </Group>
                 </Paper>
               ))
