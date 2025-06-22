@@ -37,6 +37,7 @@ export default function HomePage() {
   const [refinementQuestion, setRefinementQuestion] = useState('');
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [refreshingData, setRefreshingData] = useState(false);
+  const [testingScraping, setTestingScraping] = useState(false);
 
   const form = useForm({
     initialValues: {
@@ -152,6 +153,36 @@ export default function HomePage() {
     }
   };
 
+  const handleTestScraping = async () => {
+    setTestingScraping(true);
+    try {
+      const response = await fetch('/api/test-scraping');
+      const result = await response.json();
+      
+      if (result.success) {
+        notifications.show({
+          title: 'Scraping Test Successful',
+          message: `Found ${result.tyreCount} tyres. Sample: ${result.tyres.map((t: any) => `${t.brand} ${t.model}`).join(', ')}`,
+          color: 'green',
+        });
+      } else {
+        notifications.show({
+          title: 'Scraping Test Failed',
+          message: result.error || 'Unknown error occurred',
+          color: 'red',
+        });
+      }
+    } catch (error) {
+      notifications.show({
+        title: 'Test Error',
+        message: 'Failed to test scraping functionality',
+        color: 'red',
+      });
+    } finally {
+      setTestingScraping(false);
+    }
+  };
+
   const getRankColor = (index: number): string => {
     if (index === 0) return 'gold';
     if (index === 1) return 'silver';
@@ -174,16 +205,28 @@ export default function HomePage() {
               Get personalized tyre recommendations based on your riding style and preferences
             </Text>
           </Stack>
-          <Button
-            variant="outline"
-            color="gray"
-            leftSection={<IconRefresh size={16} />}
-            onClick={handleRefreshData}
-            loading={refreshingData}
-            disabled={refreshingData}
-          >
-            Refresh Data
-          </Button>
+          <Group>
+            <Button
+              variant="outline"
+              color="blue"
+              leftSection={<IconSearch size={16} />}
+              onClick={handleTestScraping}
+              loading={testingScraping}
+              disabled={testingScraping}
+            >
+              Test Scraping
+            </Button>
+            <Button
+              variant="outline"
+              color="gray"
+              leftSection={<IconRefresh size={16} />}
+              onClick={handleRefreshData}
+              loading={refreshingData}
+              disabled={refreshingData}
+            >
+              Refresh Data
+            </Button>
+          </Group>
         </Group>
 
         {/* Main Form */}
