@@ -53,6 +53,34 @@ function FitBounds({ tyreData }: { tyreData: TyreUsageData[] }) {
   return null;
 }
 
+// Component to invalidate map size on visibility change
+function InvalidateSizeOnVisible() {
+    const map = useMap();
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => map.invalidateSize(), 200); // Delay to allow container to resize
+                }
+            },
+            { threshold: 1 }
+        );
+
+        if (map.getContainer()) {
+            observer.observe(map.getContainer());
+        }
+
+        return () => {
+            if (map.getContainer()) {
+                observer.unobserve(map.getContainer());
+            }
+        };
+    }, [map]);
+
+    return null;
+}
+
 export default function MapComponent({ userLocation, tyreData, getIntensityColor }: MapComponentProps) {
   const getUsageIntensity = (count: number): 'low' | 'medium' | 'high' => {
     if (count < 20) return 'low';
@@ -115,6 +143,7 @@ export default function MapComponent({ userLocation, tyreData, getIntensityColor
       })}
 
       <FitBounds tyreData={tyreData} />
+      <InvalidateSizeOnVisible />
     </MapContainer>
   );
 } 
